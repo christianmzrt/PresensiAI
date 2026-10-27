@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html class="dark" lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <meta content="web_standard" name="shell-type">
+    <title>{% block title %}PresensiAI - Biometric Face Authentication System{% endblock %}</title>
+
+    <!-- Google Fonts & Material Symbols -->
+    <link href="https://fonts.googleapis.com" rel="preconnect">
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+
+    <!-- Tailwind CSS with Obsidian Biometrics Neumorphic Tokens -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script id="tailwind-config">
+    tailwind.config = {
+        darkMode: "class",
+        theme: {
+            extend: {
+                colors: {
+                    "surface": "#131313",
+                    "surface-dim": "#131313",
+                    "surface-bright": "#393939",
+                    "surface-container-lowest": "#0e0e0e",
+                    "surface-container-low": "#1c1b1b",
+                    "surface-container": "#20201f",
+                    "surface-container-high": "#2a2a2a",
+                    "surface-container-highest": "#353535",
+                    "on-surface": "#e5e2e1",
+                    "on-surface-variant": "#c4c7c8",
+                    "outline": "#8e9192",
+                    "outline-variant": "#444748",
+                    "primary": "#ffffff",
+                    "primary-container": "#e2e2e2",
+                    "on-primary-container": "#636565",
+                    "secondary": "#c6c6cb",
+                    "secondary-container": "#46464b",
+                    "status-alert": "#FF3B30",
+                    "status-warning": "#FF9F0A",
+                    "status-success": "#32D74B",
+                    "background": "#131313",
+                    "brand-bg": "#1A1A1A"
+                },
+                borderRadius: {
+                    "DEFAULT": "1rem",
+                    "lg": "2rem",
+                    "xl": "3rem",
+                    "full": "9999px"
+                },
+                fontFamily: {
+                    sans: ["Inter", "sans-serif"],
+                    mono: ["JetBrains Mono", "monospace"]
+                },
+                boxShadow: {
+                    'neu-card': '-4px -4px 10px rgba(255, 255, 255, 0.05), 4px 4px 10px rgba(0, 0, 0, 0.5)',
+                    'neu-btn': '-4px -4px 10px rgba(255, 255, 255, 0.05), 4px 4px 10px rgba(0, 0, 0, 0.5)',
+                    'neu-pressed': 'inset -4px -4px 10px rgba(255, 255, 255, 0.05), inset 4px 4px 10px rgba(0, 0, 0, 0.5)',
+                    'neu-deep': '-6px -6px 14px rgba(255, 255, 255, 0.04), 6px 6px 14px rgba(0, 0, 0, 0.65)',
+                    'neu-glow-green': '0 0 16px rgba(50, 215, 75, 0.25)',
+                }
+            }
+        }
+    };
+    </script>
+    <style>
+        body {
+            background-color: #131313;
+            color: #e5e2e1;
+            font-family: 'Inter', sans-serif;
+            overscroll-behavior: none;
+        }
+        .neu-extrude {
+            box-shadow: -4px -4px 10px rgba(255, 255, 255, 0.05), 4px 4px 10px rgba(0, 0, 0, 0.5);
+        }
+        .neu-inset {
+            box-shadow: inset -4px -4px 10px rgba(255, 255, 255, 0.05), inset 4px 4px 10px rgba(0, 0, 0, 0.5);
+        }
+        .neu-subtle-inset {
+            box-shadow: inset -2px -2px 6px rgba(255, 255, 255, 0.04), inset 2px 2px 6px rgba(0, 0, 0, 0.4);
+        }
+        .scanner-line {
+            background: linear-gradient(180deg, transparent, rgba(50, 215, 75, 0.8), transparent);
+            animation: scan 2.5s ease-in-out infinite;
+        }
+        @keyframes scan {
+            0%, 100% { top: 6%; opacity: 0.2; }
+            50% { top: 88%; opacity: 0.8; }
+        }
+        ::-webkit-scrollbar { display: none; }
+    </style>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-background text-on-surface antialiased min-h-screen flex flex-col justify-between selection:bg-surface-container-highest selection:text-primary">
+
+    <!-- GLOBAL OBSIDIAN BIOMETRICS HEADER -->
+    <header class="fixed top-0 left-0 w-full z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_4px_24px_rgba(0,0,0,0.6)]">
+        <div class="h-20 max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between gap-4">
+            <!-- Brand Identity -->
+            <a href="{{ url_for('index') }}" class="flex items-center gap-3.5 no-underline">
+                <div class="relative flex items-center justify-center w-11 h-11 rounded-full bg-surface-container shadow-[-3px_-3px_7px_rgba(255,255,255,0.04),4px_4px_9px_rgba(0,0,0,0.7)]">
+                    <span class="material-symbols-outlined text-primary text-[22px]">fingerprint</span>
+                    <span class="absolute top-1 right-1 w-2.5 h-2.5 rounded-full bg-status-success animate-pulse shadow-[0_0_8px_rgba(50,215,75,0.8)]"></span>
+                </div>
+                <div class="flex flex-col">
+                    <div class="flex items-center gap-2">
+                        <span class="font-headline-md tracking-wider text-primary font-bold uppercase text-lg sm:text-xl">PresensiAI</span>
+                        <span class="hidden sm:inline-block px-2 py-0.5 rounded-full bg-surface-container-highest text-outline font-mono text-[10px] uppercase tracking-wider shadow-[inset_-1px_-1px_3px_rgba(255,255,255,0.05),inset_1px_1px_3px_rgba(0,0,0,0.8)]">
+                            ANTI-SPOOFING
+                        </span>
+                    </div>
+                    <span class="font-mono text-[10px] text-outline tracking-wider hidden sm:block">Biometric Face Authentication System</span>
+                </div>
+            </a>
+
+            <!-- Navigation Links -->
+            <nav class="flex items-center gap-1 sm:gap-1.5 p-1.5 rounded-full bg-surface-container-lowest shadow-[inset_2px_2px_5px_rgba(0,0,0,0.8),inset_-1px_-1px_3px_rgba(255,255,255,0.02)] overflow-x-auto">
+                <a href="{{ url_for('index') }}" 
+                   class="px-3 sm:px-4 py-2 rounded-full font-mono text-xs transition-all duration-200 whitespace-nowrap {% if request.path == '/' %}bg-surface-container-highest text-white font-semibold shadow-[inset_-2px_-2px_6px_rgba(255,255,255,0.05),inset_3px_3px_7px_rgba(0,0,0,0.7)]{% else %}text-outline hover:text-white{% endif %}">
+                    Dashboard
+                </a>
+                <a href="{{ url_for('attendance_page') }}" 
+                   class="px-3 sm:px-4 py-2 rounded-full font-mono text-xs transition-all duration-200 whitespace-nowrap {% if request.path == '/attendance' %}bg-surface-container-highest text-white font-semibold shadow-[inset_-2px_-2px_6px_rgba(255,255,255,0.05),inset_3px_3px_7px_rgba(0,0,0,0.7)]{% else %}text-outline hover:text-white{% endif %}">
+                    Presensi Live
+                </a>
+                <a href="{{ url_for('register_page') }}" 
+                   class="px-3 sm:px-4 py-2 rounded-full font-mono text-xs transition-all duration-200 whitespace-nowrap {% if request.path == '/register' %}bg-surface-container-highest text-white font-semibold shadow-[inset_-2px_-2px_6px_rgba(255,255,255,0.05),inset_3px_3px_7px_rgba(0,0,0,0.7)]{% else %}text-outline hover:text-white{% endif %}">
+                    Registrasi
+                </a>
+                <a href="{{ url_for('history_page') }}" 
+                   class="px-3 sm:px-4 py-2 rounded-full font-mono text-xs transition-all duration-200 whitespace-nowrap {% if request.path == '/history' %}bg-surface-container-highest text-white font-semibold shadow-[inset_-2px_-2px_6px_rgba(255,255,255,0.05),inset_3px_3px_7px_rgba(0,0,0,0.7)]{% else %}text-outline hover:text-white{% endif %}">
+                    Riwayat
+                </a>
+                <a href="{{ url_for('students_page') }}" 
+                   class="px-3 sm:px-4 py-2 rounded-full font-mono text-xs transition-all duration-200 whitespace-nowrap {% if request.path == '/students' %}bg-surface-container-highest text-white font-semibold shadow-[inset_-2px_-2px_6px_rgba(255,255,255,0.05),inset_3px_3px_7px_rgba(0,0,0,0.7)]{% else %}text-outline hover:text-white{% endif %}">
+                    Mahasiswa
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- MAIN BODY CONTENT -->
+    <main class="w-full pt-24 pb-8 bg-background flex-1">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- GLOBAL OBSIDIAN FOOTER -->
+    <footer class="w-full bg-surface-container-lowest py-5 shadow-[0_-4px_16px_rgba(0,0,0,0.4)] border-t border-white/[0.04]">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-2 font-mono text-xs text-outline">
+                <span class="material-symbols-outlined text-[16px] text-outline">verified_user</span>
+                <span>PresensiAI Biometric System &bull; Powered by Flask, OpenCV &amp; FaceNet CNN</span>
+            </div>
+            <div class="flex items-center gap-3">
+                <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container font-mono text-[10px] text-on-surface-variant shadow-[-2px_-2px_5px_rgba(255,255,255,0.03),2px_2px_5px_rgba(0,0,0,0.6)]">
+                    <span class="w-2 h-2 rounded-full bg-status-success shadow-[0_0_6px_rgba(50,215,75,0.7)]"></span>
+                    <span class="text-outline">WebRTC Active</span>
+                </div>
+                <div class="flex items-center gap-1.5 px-3 py-1 rounded-full bg-surface-container font-mono text-[10px] text-on-surface-variant shadow-[-2px_-2px_5px_rgba(255,255,255,0.03),2px_2px_5px_rgba(0,0,0,0.6)]">
+                    <span class="w-2 h-2 rounded-full bg-status-success shadow-[0_0_6px_rgba(50,215,75,0.7)]"></span>
+                    <span class="text-outline">Model Loaded</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,284 @@
+/* ===================================================================
+   APPLE DESIGN SYSTEM STYLING FOR PRESENSI AI (Kecerdasan Tiruan)
+   Source Reference: www.apple.com-DESIGN.md
+   Tokens: Primary (#0071E3), Canvas (#FFFFFF), Surface (#F5F5F7), 
+           Body (#1D1D1F), Muted (#6E6E73), Pill Buttons (9999px)
+=================================================================== */
+
+:root {
+    --apple-primary: #0071E3;
+    --apple-primary-hover: #0077ED;
+    --apple-accent: #2997FF;
+    --apple-accent-dark: #0066CC;
+    --apple-canvas: #FFFFFF;
+    --apple-surface: #F5F5F7;
+    --apple-surface-raised: #EBEBED;
+    --apple-body: #1D1D1F;
+    --apple-muted: #6E6E73;
+    --apple-border: #E5E5EA;
+    --apple-success: #34C759;
+    --apple-warning: #FF9F0A;
+    --apple-danger: #FF3B30;
+    
+    --apple-font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --apple-radius-sm: 10px;
+    --apple-radius-md: 16px;
+    --apple-radius-lg: 22px;
+    --apple-radius-pill: 9999px;
+}
+
+/* Global Reset & Typography */
+body {
+    font-family: var(--apple-font-stack);
+    background-color: var(--apple-canvas);
+    color: var(--apple-body);
+    font-size: 15px;
+    line-height: 1.47;
+    letter-spacing: -0.22px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    -webkit-font-smoothing: antialiased;
+}
+
+main {
+    flex: 1;
+}
+
+/* Apple Frosted Navbar (48px) */
+.apple-navbar {
+    height: 52px;
+    background: rgba(255, 255, 255, 0.82) !important;
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+    transition: background 0.3s ease;
+}
+
+.apple-navbar .navbar-brand {
+    font-weight: 600;
+    font-size: 16px;
+    letter-spacing: -0.3px;
+    color: #000000 !important;
+}
+
+.apple-navbar .nav-link {
+    font-size: 14px;
+    font-weight: 400;
+    color: var(--apple-muted) !important;
+    padding: 6px 14px !important;
+    border-radius: var(--apple-radius-pill);
+    transition: all 0.2s ease;
+}
+
+.apple-navbar .nav-link:hover {
+    color: var(--apple-body) !important;
+    background-color: rgba(0, 0, 0, 0.04);
+}
+
+.apple-navbar .nav-link.active {
+    color: var(--apple-primary) !important;
+    font-weight: 600;
+    background-color: rgba(0, 113, 227, 0.08);
+}
+
+/* Apple Status Pill Badge */
+.apple-badge-pill {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 12px;
+    border-radius: var(--apple-radius-pill);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.apple-badge-pill.primary {
+    background-color: rgba(0, 113, 227, 0.1);
+    color: var(--apple-primary);
+}
+
+.apple-badge-pill.success {
+    background-color: rgba(52, 199, 89, 0.12);
+    color: #248A3D;
+}
+
+.apple-badge-pill.warning {
+    background-color: rgba(255, 159, 10, 0.14);
+    color: #B25E00;
+}
+
+/* Apple Button System */
+.btn-apple-primary {
+    background-color: var(--apple-primary) !important;
+    color: #FFFFFF !important;
+    border: none !important;
+    border-radius: var(--apple-radius-pill) !important;
+    padding: 10px 22px !important;
+    font-size: 15px !important;
+    font-weight: 400 !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+.btn-apple-primary:hover {
+    background-color: var(--apple-primary-hover) !important;
+}
+
+.btn-apple-primary:active {
+    transform: scale(0.98);
+}
+
+.btn-apple-secondary {
+    background-color: var(--apple-surface) !important;
+    color: var(--apple-body) !important;
+    border: 1px solid var(--apple-border) !important;
+    border-radius: var(--apple-radius-pill) !important;
+    padding: 10px 20px !important;
+    font-size: 15px !important;
+    font-weight: 400 !important;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: all 0.2s ease;
+}
+
+.btn-apple-secondary:hover {
+    background-color: var(--apple-surface-raised) !important;
+    border-color: var(--apple-muted) !important;
+}
+
+/* Card Styling: Color-blocking instead of heavy shadows */
+.card {
+    background-color: var(--apple-surface);
+    border: 1px solid var(--apple-border);
+    border-radius: var(--apple-radius-lg);
+    box-shadow: none !important; /* Apple Design: No drop shadows */
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.card-header {
+    background-color: transparent !important;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06) !important;
+    padding: 18px 24px;
+}
+
+.card-body {
+    padding: 24px;
+}
+
+/* Dashboard Banner (Clean Minimalist Apple Style) */
+.dashboard-banner {
+    background: var(--apple-surface) !important;
+    border: 1px solid var(--apple-border) !important;
+    color: var(--apple-body) !important;
+}
+
+.dashboard-banner h1 {
+    font-size: 42px !important;
+    font-weight: 600 !important;
+    letter-spacing: -0.8px;
+    color: #000000 !important;
+    text-shadow: none !important;
+}
+
+.dashboard-banner p.lead {
+    color: var(--apple-muted) !important;
+    font-size: 18px;
+}
+
+/* Apple Face ID Viewfinder Camera Overlay */
+.camera-container-apple {
+    position: relative;
+    background: #000000;
+    border-radius: var(--apple-radius-md);
+    overflow: hidden;
+}
+
+.face-target-apple {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 220px;
+    height: 280px;
+    border: 2px solid rgba(255, 255, 255, 0.4);
+    border-radius: 40px;
+    pointer-events: none;
+    transition: all 0.3s ease;
+}
+
+.face-target-apple.tracking {
+    border-color: var(--apple-accent);
+    box-shadow: 0 0 20px rgba(41, 151, 255, 0.4);
+}
+
+.face-target-apple.verified {
+    border-color: var(--apple-success);
+    box-shadow: 0 0 24px rgba(52, 199, 89, 0.45);
+}
+
+/* Floating Status Pills */
+.hud-pill {
+    background: rgba(29, 29, 31, 0.75);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: var(--apple-radius-pill);
+    color: #FFFFFF;
+    padding: 6px 16px;
+}
+
+/* Pulse animation */
+.animate-pulse-green {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: var(--apple-success);
+    box-shadow: 0 0 0 3px rgba(52, 199, 89, 0.25);
+    animation: applePulse 2s infinite;
+}
+
+@keyframes applePulse {
+    0% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.5); }
+    70% { box-shadow: 0 0 0 6px rgba(52, 199, 89, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(52, 199, 89, 0); }
+}
+
+/* Tables (Apple Crisp Table Style) */
+.table {
+    --bs-table-bg: transparent;
+    font-size: 14px;
+}
+
+.table thead th {
+    background-color: var(--apple-surface);
+    color: var(--apple-muted);
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+    border-bottom: 1px solid var(--apple-border);
+    padding: 14px 18px;
+}
+
+.table tbody td {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--apple-border);
+    vertical-align: middle;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(0, 0, 0, 0.02);
+}
+
+/* Footer Apple Clean */
+footer.apple-footer {
+    background: var(--apple-surface);
+    border-top: 1px solid var(--apple-border);
+    padding: 24px 0;
+    color: var(--apple-muted);
+    font-size: 13px;
+}

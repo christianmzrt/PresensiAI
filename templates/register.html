@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block title %}Registrasi Wajah Mahasiswa - PresensiAI{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 w-full">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+        <!-- LEFT COLUMN: REGISTRATION FORM & SPECS (5 Cols) -->
+        <div class="lg:col-span-5 flex flex-col gap-6">
+            <!-- Primary Form Card -->
+            <div class="bg-surface-container rounded-[32px] p-6 md:p-8 neu-extrude flex flex-col gap-6">
+                <div>
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="w-1.5 h-4 bg-status-alert rounded-full"></span>
+                        <span class="font-mono text-xs uppercase tracking-wider text-outline">Modul Registrasi</span>
+                    </div>
+                    <h1 class="text-xl md:text-2xl font-bold text-primary tracking-wide">Registrasi Data Biometrik</h1>
+                    <p class="text-xs text-outline mt-1">Daftarkan subjek dengan mengambil minimal 3 sampel foto wajah dari berbagai sudut.</p>
+                </div>
+
+                <!-- Identity Form -->
+                <form class="flex flex-col gap-5" onsubmit="return false;">
+                    <!-- NIM Field -->
+                    <div class="flex flex-col gap-2">
+                        <label class="font-mono text-xs text-on-surface-variant uppercase flex items-center justify-between" for="inputNim">
+                            <span>Nomor Induk Mahasiswa (NIM)</span>
+                            <span class="text-status-alert font-mono">*</span>
+                        </label>
+                        <div class="relative flex items-center">
+                            <span class="material-symbols-outlined absolute left-4 text-outline pointer-events-none text-[18px]">badge</span>
+                            <input autocomplete="off" class="w-full bg-[#161616] text-primary font-mono text-sm rounded-2xl pl-11 pr-4 py-3.5 neu-inset placeholder:text-outline/50 focus:outline-none transition-all" id="inputNim" name="nim" placeholder="Contoh: 2208561001" type="text" required>
+                        </div>
+                    </div>
+
+                    <!-- Nama Lengkap Field -->
+                    <div class="flex flex-col gap-2">
+                        <label class="font-mono text-xs text-on-surface-variant uppercase flex items-center justify-between" for="inputNama">
+                            <span>Nama Lengkap Mahasiswa</span>
+                            <span class="text-status-alert font-mono">*</span>
+                        </label>
+                        <div class="relative flex items-center">
+                            <span class="material-symbols-outlined absolute left-4 text-outline pointer-events-none text-[18px]">person</span>
+                            <input autocomplete="off" class="w-full bg-[#161616] text-primary text-sm rounded-2xl pl-11 pr-4 py-3.5 neu-inset placeholder:text-outline/50 focus:outline-none transition-all" id="inputNama" name="nama" placeholder="Contoh: I Putu Arya Wijaya" type="text" required>
+                        </div>
+                    </div>
+
+                    <!-- Notification / Alert Box -->
+                    <div class="hidden items-start gap-3 bg-[#1A1A1A] p-4 rounded-2xl neu-subtle-inset transition-all" id="alertBox"></div>
+
+                    <!-- Pipeline Specification Checklist -->
+                    <div class="bg-[#171717] rounded-2xl p-4 flex flex-col gap-2.5 neu-subtle-inset">
+                        <div class="flex items-center justify-between font-mono text-[10px] text-outline uppercase tracking-wider">
+                            <span>Validasi Pra-Ekstraksi Biometrik</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs text-on-surface-variant">
+                            <span class="material-symbols-outlined text-status-success text-[16px]">check_circle</span>
+                            <span>Deteksi Wajah Haar Cascade &amp; Cropping 160x160</span>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs text-on-surface-variant">
+                            <span class="material-symbols-outlined text-status-success text-[16px]">check_circle</span>
+                            <span>512-D L2-Norm FaceNet CNN Vector Embedding</span>
+                        </div>
+                    </div>
+
+                    <!-- Submit Action -->
+                    <div class="flex flex-col gap-3 pt-2">
+                        <button type="button" id="btnSubmit" disabled
+                                class="w-full py-4 px-6 rounded-full font-mono text-xs uppercase tracking-wider font-bold transition-all duration-200 flex items-center justify-center gap-2 bg-status-success text-black shadow-[-2px_-2px_8px_rgba(255,255,255,0.06),3px_3px_10px_rgba(0,0,0,0.7)] active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none">
+                            <span id="btnSubmitText" class="flex items-center gap-2">
+                                <span class="material-symbols-outlined text-[18px]">verified</span>
+                                Ekstraksi CNN &amp; Daftarkan Mahasiswa
+                            </span>
+                            <span id="btnSubmitSpinner" class="hidden flex items-center gap-2">
+                                <span class="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin"></span>
+                                Memproses Embedding FaceNet 512-d...
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN: CAMERA & SAMPLE GALLERY (7 Cols) -->
+        <div class="lg:col-span-7 flex flex-col gap-6">
+            <!-- Camera Viewport Container -->
+            <div class="bg-surface-container rounded-[32px] p-4 md:p-5 neu-extrude flex flex-col gap-4">
+                <!-- Live HUD Optical Frame -->
+                <div class="relative w-full aspect-[4/3] bg-black rounded-[28px] overflow-hidden neu-inset flex items-center justify-center">
+                    <!-- WebRTC Stream Target -->
+                    <video autoplay class="w-full h-full object-cover rounded-[28px]" id="webcam" muted playsinline></video>
+                    
+                    <!-- Loading State -->
+                    <div id="cameraLoading" class="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-20 text-white">
+                        <div class="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-2"></div>
+                        <div class="font-mono text-xs uppercase tracking-wider">Menghubungkan Webcam...</div>
+                    </div>
+
+                    <!-- Canvas for capture -->
+                    <canvas class="hidden" id="captureCanvas"></canvas>
+
+                    <!-- Top HUD Badges -->
+                    <div class="absolute top-4 left-4 right-4 flex items-center justify-between pointer-events-none z-10">
+                        <div class="flex items-center gap-2 bg-[#1A1A1A]/85 backdrop-blur-md px-3.5 py-1.5 rounded-full neu-extrude">
+                            <span class="relative flex h-2.5 w-2.5">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-alert opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-status-alert"></span>
+                            </span>
+                            <span class="font-mono text-[10px] text-primary tracking-wider uppercase">Kamera Registrasi</span>
+                        </div>
+                        <div class="flex items-center gap-2 bg-[#1A1A1A]/85 backdrop-blur-md px-3 py-1.5 rounded-full font-mono text-[10px] text-on-surface-variant">
+                            <span class="text-status-success font-semibold">WebRTC Active</span>
+                            <span>&bull;</span>
+                            <span>4:3 HD</span>
+                        </div>
+                    </div>
+
+                    <!-- Center Optical Alignment Reticle (HUD) -->
+                    <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                        <div class="relative w-64 h-72 rounded-[40px] flex items-center justify-center">
+                            <!-- Corner Brackets -->
+                            <div class="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-primary/40 rounded-tl-xl"></div>
+                            <div class="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-primary/40 rounded-tr-xl"></div>
+                            <div class="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-primary/40 rounded-bl-xl"></div>
+                            <div class="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-primary/40 rounded-br-xl"></div>
+                            <div class="w-2.5 h-0.5 bg-primary/20"></div>
+                            <div class="h-2.5 w-0.5 bg-primary/20 absolute"></div>
+                            <!-- Animated Scanner Line -->
+                            <div class="absolute inset-x-2 h-1 scanner-line rounded-full pointer-events-none"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Camera Control Bar -->
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 py-1">
+                    <div class="flex items-center gap-3">
+                        <span class="font-mono text-xs text-outline uppercase tracking-wider">Status Sampel:</span>
+                        <span class="font-mono text-sm text-primary tracking-wider font-bold" id="sampleCounter">
+                            (0/5 Sampel)
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <!-- Reset Button -->
+                        <button class="flex-1 sm:flex-none px-5 py-3 rounded-full font-mono text-xs text-on-surface-variant hover:text-primary bg-surface-container-high neu-btn active:neu-pressed transition-all flex items-center justify-center gap-2" id="btnResetSamples" title="Bersihkan semua sampel terambil" type="button">
+                            <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+                            <span>Reset</span>
+                        </button>
+                        <!-- Capture Button -->
+                        <button class="flex-1 sm:flex-none px-6 py-3.5 rounded-full font-mono text-xs uppercase font-bold text-primary bg-surface-container-high neu-btn active:neu-pressed transition-all flex items-center justify-center gap-2 group hover:text-status-success" id="btnCapture" type="button">
+                            <span class="material-symbols-outlined text-[18px]">photo_camera</span>
+                            <span>Ambil Foto</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Samples Gallery Card -->
+            <div class="bg-surface-container rounded-[28px] p-5 neu-extrude flex flex-col gap-3">
+                <div class="flex items-center justify-between pb-2 border-b border-white/[0.04]">
+                    <span class="font-mono text-xs uppercase tracking-wider text-outline">Galeri Sampel Wajah (Min 3, Rekomendasi 5)</span>
+                    <span class="font-mono text-[10px] text-outline">Maks. 10</span>
+                </div>
+
+                <div id="samplesContainer" class="grid grid-cols-3 sm:grid-cols-5 gap-3 p-3 rounded-2xl bg-surface-container-lowest neu-inset min-h-[120px] max-h-[220px] overflow-y-auto">
+                    <div id="emptySamplesNotice" class="col-span-full flex flex-col items-center justify-center py-6 text-center text-outline">
+                        <span class="material-symbols-outlined text-[32px] opacity-40 mb-1">perm_media</span>
+                        <p class="text-xs mb-0">Belum ada sampel foto wajah yang diambil.</p>
+                        <span class="text-[10px] text-outline/60 mt-0.5">Arahkan wajah ke kamera dan klik tombol "Ambil Foto".</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const video = document.getElementById("webcam");
+const canvas = document.getElementById("captureCanvas");
+const btnCapture = document.getElementById("btnCapture");
+const btnReset = document.getElementById("btnResetSamples");
+const btnSubmit = document.getElementById("btnSubmit");
+const samplesContainer = document.getElementById("samplesContainer");
+const emptyNotice = document.getElementById("emptySamplesNotice");
+const sampleCounter = document.getElementById("sampleCounter");
+const alertBox = document.getElementById("alertBox");
+
+let capturedImages = [];
+const TARGET_SAMPLES = 5;
+
+// Start Webcam via WebRTC
+async function startWebcam() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
+            audio: false
+        });
+        video.srcObject = stream;
+        const loader = document.getElementById("cameraLoading");
+        if (loader) loader.classList.add("hidden");
+    } catch (err) {
+        console.error("Camera access error:", err);
+        const loader = document.getElementById("cameraLoading");
+        if (loader) {
+            loader.innerHTML = `
+                <div class="text-status-alert font-bold text-center p-4">
+                    <span class="material-symbols-outlined text-3xl mb-1">videocam_off</span>
+                    <div>Gagal Mengakses Webcam</div>
+                    <p class="text-xs text-outline mt-1 font-mono">Pastikan izin kamera diaktifkan di browser.</p>
+                </div>
+            `;
+        }
+    }
+}
+
+// Capture current frame from webcam
+btnCapture.addEventListener("click", () => {
+    if (capturedImages.length >= 10) {
+        showAlert("warning", "Maksimal 10 sampel foto!");
+        return;
+    }
+
+    canvas.width = video.videoWidth || 640;
+    canvas.height = video.videoHeight || 480;
+    const ctx = canvas.getContext("2d");
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL("image/jpeg", 0.9);
+
+    capturedImages.push(dataUrl);
+    updateSamplesUI();
+});
+
+btnReset.addEventListener("click", () => {
+    capturedImages = [];
+    updateSamplesUI();
+    hideAlert();
+});
+
+function updateSamplesUI() {
+    sampleCounter.innerText = `(${capturedImages.length}/${TARGET_SAMPLES} Sampel)`;
+    if (capturedImages.length === 0) {
+        samplesContainer.innerHTML = '';
+        samplesContainer.appendChild(emptyNotice);
+        btnSubmit.disabled = true;
+        return;
+    }
+
+    if (emptyNotice.parentNode === samplesContainer) {
+        samplesContainer.removeChild(emptyNotice);
+    }
+
+    samplesContainer.innerHTML = '';
+    capturedImages.forEach((imgSrc, idx) => {
+        const item = document.createElement("div");
+        item.className = "relative rounded-xl overflow-hidden aspect-square border border-white/10 neu-extrude group";
+        item.innerHTML = `
+            <img src="${imgSrc}" class="w-full h-full object-cover rounded-xl">
+            <button type="button" class="absolute top-1 right-1 w-5 h-5 bg-status-alert text-white rounded-full flex items-center justify-center text-xs font-bold hover:scale-110 transition-transform shadow-md" onclick="removeSample(${idx})" title="Hapus foto ini">
+                &times;
+            </button>
+            <span class="absolute bottom-1 left-1 text-[9px] font-mono bg-black/70 px-1 rounded text-white/90">#${idx+1}</span>
+        `;
+        samplesContainer.appendChild(item);
+    });
+
+    btnSubmit.disabled = capturedImages.length < 3;
+}
+
+window.removeSample = function(idx) {
+    capturedImages.splice(idx, 1);
+    updateSamplesUI();
+};
+
+function showAlert(type, message) {
+    alertBox.classList.remove("hidden");
+    const isSuccess = type === "success";
+    const isWarning = type === "warning";
+    const icon = isSuccess ? "check_circle" : (isWarning ? "warning" : "error");
+    const colorClass = isSuccess ? "text-status-success" : (isWarning ? "text-status-warning" : "text-status-alert");
+
+    alertBox.innerHTML = `
+        <span class="material-symbols-outlined ${colorClass} text-[20px] shrink-0 mt-0.5">${icon}</span>
+        <div class="flex flex-col gap-0.5">
+            <p class="font-mono text-xs font-bold text-primary uppercase">${isSuccess ? 'Sukses Perekaman' : 'Perhatian'}</p>
+            <p class="text-xs text-outline leading-relaxed">${message}</p>
+        </div>
+    `;
+}
+
+function hideAlert() {
+    alertBox.classList.add("hidden");
+}
+
+// Submit Registration
+btnSubmit.addEventListener("click", async () => {
+    const nim = document.getElementById("inputNim").value.trim();
+    const nama = document.getElementById("inputNama").value.trim();
+
+    if (!nim || !nama) {
+        showAlert("danger", "Silakan isi NIM dan Nama Mahasiswa terlebih dahulu!");
+        return;
+    }
+
+    if (capturedImages.length < 3) {
+        showAlert("warning", "Minimal 3 sampel foto wajah diperlukan!");
+        return;
+    }
+
+    // Toggle Loading
+    document.getElementById("btnSubmitText").classList.add("hidden");
+    document.getElementById("btnSubmitSpinner").classList.remove("hidden");
+    btnSubmit.disabled = true;
+    hideAlert();
+
+    try {
+        const response = await fetch("/api/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                nim: nim,
+                nama: nama,
+                images: capturedImages
+            })
+        });
+
+        const data = await response.json();
+        if (data.success) {
+            showAlert("success", `${data.message} <br><a href="/attendance" class="text-status-success underline font-semibold mt-1 inline-block">Lanjut ke Presensi Kamera &rarr;</a>`);
+            document.getElementById("inputNim").value = "";
+            document.getElementById("inputNama").value = "";
+            capturedImages = [];
+            updateSamplesUI();
+        } else {
+            showAlert("danger", `${data.message}`);
+        }
+    } catch (err) {
+        console.error("Registration error:", err);
+        showAlert("danger", "Terjadi kesalahan jaringan atau server saat memproses registrasi.");
+    } finally {
+        document.getElementById("btnSubmitText").classList.remove("hidden");
+        document.getElementById("btnSubmitSpinner").classList.add("hidden");
+        btnSubmit.disabled = capturedImages.length < 3;
+    }
+});
+
+window.addEventListener("DOMContentLoaded", startWebcam);
+</script>
+{% endblock %}

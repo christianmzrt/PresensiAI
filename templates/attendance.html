@@ -1,0 +1,492 @@
+{% extends "base.html" %}
+
+{% block title %}Presensi Live Anti-Spoofing - PresensiAI{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 w-full">
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+
+        <!-- LEFT COLUMN: CAMERA AREA & CONTROLS (Cols 7) -->
+        <section class="lg:col-span-7 flex flex-col gap-6">
+
+            <!-- Neumorphic Camera Card Container (Border Radius 32px) -->
+            <div class="bg-surface-container rounded-[32px] p-5 md:p-6 neu-extrude relative flex flex-col">
+                
+                <!-- Inner Camera Screen Frame (Aspect Ratio 4:3) -->
+                <div class="relative w-full aspect-[4/3] rounded-[24px] bg-[#0E0E0E] overflow-hidden neu-inset border border-white/[0.04]">
+                    
+                    <!-- Video Element -->
+                    <video id="webcam" autoplay playsinline muted class="w-full h-full object-cover"></video>
+
+                    <!-- Camera Connecting State -->
+                    <div id="cameraConnecting" class="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-30 text-white">
+                        <div class="w-8 h-8 border-2 border-status-success border-t-transparent rounded-full animate-spin mb-3"></div>
+                        <div class="font-mono text-xs uppercase tracking-wider">Mengaktifkan Kamera Real-Time...</div>
+                    </div>
+
+                    <!-- Overlay Canvas (For bounding boxes) -->
+                    <canvas id="overlayCanvas" class="absolute inset-0 w-full h-full pointer-events-none z-10"></canvas>
+
+                    <!-- Snapshot Canvas (Hidden for capturing frames) -->
+                    <canvas id="snapshotCanvas" class="hidden"></canvas>
+
+                    <!-- Animated Scanning Laser Bar -->
+                    <div class="absolute left-6 right-6 h-0.5 scanner-line pointer-events-none z-10"></div>
+
+                    <!-- Top Overlay Indicators Inside Camera -->
+                    <div class="absolute top-4 left-4 right-4 flex items-center justify-between z-20 pointer-events-none">
+                        <!-- AI Badge -->
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-[11px] font-semibold text-white/90 border border-white/10 shadow-lg font-mono">
+                            <span class="w-2 h-2 rounded-full bg-status-success"></span>
+                            Computer Vision AI
+                        </span>
+
+                        <!-- Live Indicator -->
+                        <div class="flex items-center gap-2 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10">
+                            <span class="relative flex h-2.5 w-2.5">
+                                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-status-alert opacity-75"></span>
+                                <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-status-alert"></span>
+                            </span>
+                            <span class="text-[11px] font-bold tracking-wider uppercase text-white/90 font-mono">LIVE CAMERA</span>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Instruction Banner Overlay -->
+                    <div class="absolute top-14 left-4 right-4 z-20 flex justify-center pointer-events-none">
+                        <div class="px-4 py-2 rounded-full bg-black/70 backdrop-blur-md border border-white/10 shadow-md">
+                            <p id="instructionText" class="text-xs md:text-sm font-medium text-white text-center flex items-center gap-2">
+                                <span class="w-2 h-2 rounded-full bg-status-warning animate-pulse"></span>
+                                Arahkan wajah Anda ke kamera
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- HUD Bar (Bottom of Camera Container, frosted glass/blur effect) -->
+                    <div class="absolute bottom-3 left-3 right-3 z-20 p-3 rounded-[20px] bg-black/65 backdrop-blur-md border border-white/10 flex flex-wrap items-center justify-between gap-3 shadow-xl">
+                        <!-- Metrics (EAR & Blink) -->
+                        <div class="flex items-center gap-4">
+                            <div class="flex items-center gap-2">
+                                <span class="text-[11px] uppercase font-mono text-outline">EAR:</span>
+                                <span id="hudEar" class="font-mono text-xs font-bold text-white px-2 py-0.5 rounded bg-white/10">0.00</span>
+                            </div>
+                            <div class="h-3 w-px bg-white/20"></div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-[11px] uppercase font-mono text-outline">BLINK:</span>
+                                <span id="hudBlinkCount" class="font-mono text-xs font-bold text-status-warning px-2 py-0.5 rounded bg-white/10">0 / 2</span>
+                            </div>
+                        </div>
+
+                        <!-- Liveness Status Badge -->
+                        <div>
+                            <span id="hudLivenessBadge" class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-status-alert/20 text-status-alert border border-status-alert/30 font-mono">
+                                <span class="material-symbols-outlined text-[14px]">shield</span>
+                                Anti-Spoof: Belum Lolos
+                            </span>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- CONTROLS ROW (Below Camera) -->
+            <div class="bg-surface-container rounded-[24px] p-4 neu-extrude flex flex-col sm:flex-row items-center justify-between gap-4">
+                <!-- Reset Session Button -->
+                <button id="btnRestartSession" type="button" class="w-full sm:w-auto px-6 py-3 rounded-full bg-surface-container-high neu-btn text-xs font-mono font-semibold tracking-wider uppercase text-white hover:text-status-alert active:neu-pressed transition-all flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined text-[16px]">restart_alt</span>
+                    Reset Session
+                </button>
+
+                <!-- Fast Mode Toggle -->
+                <label class="flex items-center gap-3 cursor-pointer select-none">
+                    <span class="text-xs font-medium text-outline">Mode Pengujian Cepat (Bypass Liveness)</span>
+                    <div class="relative">
+                        <input type="checkbox" id="checkManualMode" class="sr-only peer">
+                        <div class="w-11 h-6 bg-surface-container-lowest neu-inset rounded-full transition-colors peer-checked:bg-status-success/30"></div>
+                        <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full neu-extrude transition-transform peer-checked:translate-x-5 peer-checked:bg-status-success"></div>
+                    </div>
+                </label>
+            </div>
+
+        </section>
+
+        <!-- RIGHT COLUMN: STATUS PANELS (Cols 5) -->
+        <section class="lg:col-span-5 flex flex-col gap-6">
+
+            <!-- PANEL 1: LIVENESS DETECTION (Tahap 1) -->
+            <div class="bg-surface-container rounded-[28px] p-6 neu-extrude flex flex-col gap-4">
+                <div class="flex items-center justify-between pb-3 border-b border-white/[0.04]">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-status-warning"></span>
+                            <h2 class="text-base font-bold text-white tracking-wide">Deteksi Liveness</h2>
+                        </div>
+                        <p class="text-xs text-outline mt-0.5">Pencegahan manipulasi foto &amp; spoofing layar</p>
+                    </div>
+                    <span class="text-[11px] font-mono font-semibold px-2.5 py-1 rounded-full bg-white/[0.06] text-outline">
+                        Tahap 1
+                    </span>
+                </div>
+
+                <!-- Blink Detection Progress Section -->
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-medium text-outline">Kedipan Mata (EAR Tracking)</span>
+                        <span id="labelBlinkProgress" class="text-xs font-mono font-bold text-status-warning">0 / 2</span>
+                    </div>
+
+                    <!-- Progress Bar Track -->
+                    <div class="w-full h-3 rounded-full bg-surface-container-lowest neu-subtle-inset p-0.5 overflow-hidden">
+                        <div id="progressBlink" class="h-full rounded-full bg-gradient-to-r from-status-warning to-status-success transition-all duration-300" style="width: 0%;"></div>
+                    </div>
+                    <div class="flex justify-between text-[10px] font-mono text-outline/60 px-0.5">
+                        <span>0% (Standby)</span>
+                        <span>50% (1 Kedipan)</span>
+                        <span>100% (Valid)</span>
+                    </div>
+                </div>
+
+                <!-- Liveness Alert Box -->
+                <div id="livenessStatusAlert" class="mt-2 p-3.5 rounded-[16px] bg-white/[0.03] neu-inset flex items-start gap-3 border border-white/[0.03]">
+                    <span class="material-symbols-outlined text-status-warning text-[20px] shrink-0 mt-0.5">info</span>
+                    <div class="flex-1">
+                        <p class="text-[11px] font-semibold text-white/90 uppercase tracking-wider font-mono">Status Anti-Spoof</p>
+                        <p id="livenessAlertMsg" class="text-xs text-outline mt-0.5">
+                            Menunggu deteksi wajah aktif... Silakan posisikan wajah di depan kamera.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- PANEL 2: CNN FACENET RECOGNITION (Tahap 2) -->
+            <div class="bg-surface-container rounded-[28px] p-6 neu-extrude flex flex-col gap-4">
+                <div class="flex items-center justify-between pb-3 border-b border-white/[0.04]">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-status-success"></span>
+                            <h2 class="text-base font-bold text-white tracking-wide">CNN FaceNet Recognition</h2>
+                        </div>
+                        <p class="text-xs text-outline mt-0.5">Ekstraksi fitur biometrik &amp; verifikasi identitas</p>
+                    </div>
+                    <span class="text-[11px] font-mono font-semibold px-2.5 py-1 rounded-full bg-white/[0.06] text-outline">
+                        Tahap 2
+                    </span>
+                </div>
+
+                <!-- Waiting State Container (Active when liveness not passed) -->
+                <div id="waitingRecognitionState" class="p-8 rounded-[20px] bg-surface-container-lowest neu-inset flex flex-col items-center justify-center text-center gap-3">
+                    <div class="w-12 h-12 rounded-full neu-extrude flex items-center justify-center text-outline">
+                        <span class="material-symbols-outlined text-[24px] animate-pulse">person_search</span>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-semibold text-white">Standby Identifikasi</h3>
+                        <p class="text-xs text-outline max-w-xs mt-1">
+                            Menunggu verifikasi liveness tahap 1 selesai sebelum menjalankan ekstraksi embedding 512-d FaceNet.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Success State Container (Recognized State - Hidden by default) -->
+                <div id="recognizedState" class="hidden flex flex-col gap-4">
+                    <!-- Success Alert Banner -->
+                    <div class="p-4 rounded-[18px] bg-status-success/10 border border-status-success/30 flex items-center gap-3">
+                        <div class="w-9 h-9 rounded-full bg-status-success text-black flex items-center justify-center font-bold shrink-0">
+                            <span class="material-symbols-outlined text-[20px]">check</span>
+                        </div>
+                        <div>
+                            <h4 id="resStatusTitle" class="text-sm font-bold text-white">Presensi Berhasil!</h4>
+                            <p id="resStatusSubtitle" class="text-xs text-status-success">Identitas mahasiswa berhasil diverifikasi dan dicatat.</p>
+                        </div>
+                    </div>
+
+                    <!-- Student Data Details Card -->
+                    <div class="p-4 rounded-[20px] bg-surface-container-lowest neu-inset flex flex-col gap-3">
+                        <div class="flex items-center justify-between pb-2 border-b border-white/[0.04]">
+                            <span class="text-xs text-outline">Nama Mahasiswa</span>
+                            <span id="resNama" class="text-sm font-bold text-white tracking-wide">-</span>
+                        </div>
+                        <div class="flex items-center justify-between pb-2 border-b border-white/[0.04]">
+                            <span class="text-xs text-outline">NIM</span>
+                            <span id="resNim" class="text-xs font-mono font-semibold text-white px-2 py-0.5 rounded bg-white/10">-</span>
+                        </div>
+                        <div class="flex items-center justify-between pb-2 border-b border-white/[0.04]">
+                            <span class="text-xs text-outline">Euclidean Distance</span>
+                            <span id="resDistance" class="text-xs font-mono font-medium text-status-success">-</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs text-outline">Tingkat Keyakinan</span>
+                            <span id="resConfidence" class="text-xs font-mono font-bold text-status-success">-</span>
+                        </div>
+                    </div>
+
+                    <!-- Mahasiswa Berikutnya Button -->
+                    <button type="button" onclick="resetAttendanceFlow()" class="w-full py-3 px-6 rounded-full bg-surface-container-high neu-btn text-xs font-mono font-semibold uppercase tracking-wider text-white hover:text-status-success active:neu-pressed transition-all flex items-center justify-center gap-2">
+                        <span class="material-symbols-outlined text-[16px]">navigate_next</span>
+                        Mahasiswa Berikutnya
+                    </button>
+                </div>
+
+            </div>
+
+        </section>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const video = document.getElementById("webcam");
+const overlayCanvas = document.getElementById("overlayCanvas");
+const snapshotCanvas = document.getElementById("snapshotCanvas");
+const instructionText = document.getElementById("instructionText");
+const hudEar = document.getElementById("hudEar");
+const hudBlinkCount = document.getElementById("hudBlinkCount");
+const hudLivenessBadge = document.getElementById("hudLivenessBadge");
+const labelBlinkProgress = document.getElementById("labelBlinkProgress");
+const progressBlink = document.getElementById("progressBlink");
+const livenessStatusAlert = document.getElementById("livenessStatusAlert");
+const livenessAlertMsg = document.getElementById("livenessAlertMsg");
+const waitingRecognitionState = document.getElementById("waitingRecognitionState");
+const recognizedState = document.getElementById("recognizedState");
+const btnRestart = document.getElementById("btnRestartSession");
+const checkManualMode = document.getElementById("checkManualMode");
+
+// Session ID for keeping blink state on server
+const sessionId = "session_" + Math.random().toString(36).substring(2, 9);
+
+let isStreaming = false;
+let isProcessingFrame = false;
+let livenessPassed = false;
+let recognitionDone = false;
+let frameInterval = null;
+
+// Start Webcam via WebRTC
+async function initWebcam() {
+    try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: { width: { ideal: 640 }, height: { ideal: 480 }, facingMode: "user" },
+            audio: false
+        });
+        video.srcObject = stream;
+        video.addEventListener("loadedmetadata", () => {
+            overlayCanvas.width = video.videoWidth;
+            overlayCanvas.height = video.videoHeight;
+            const connecting = document.getElementById("cameraConnecting");
+            if (connecting) connecting.classList.add("hidden");
+            isStreaming = true;
+            startFrameLoop();
+        });
+    } catch (err) {
+        console.error("Camera access failed:", err);
+        const connecting = document.getElementById("cameraConnecting");
+        if (connecting) {
+            connecting.innerHTML = `
+                <div class="text-status-alert font-bold text-center p-4">
+                    <span class="material-symbols-outlined text-3xl mb-1">videocam_off</span>
+                    <div>Gagal Mengakses Kamera</div>
+                    <p class="text-xs text-outline mt-1 font-mono">Izinkan akses kamera di browser Anda.</p>
+                </div>
+            `;
+        }
+    }
+}
+
+// Main Frame Processing Loop (~10-12 FPS)
+function startFrameLoop() {
+    if (frameInterval) clearInterval(frameInterval);
+    frameInterval = setInterval(processCurrentFrame, 100);
+}
+
+async function processCurrentFrame() {
+    if (!isStreaming || isProcessingFrame || recognitionDone) return;
+    isProcessingFrame = true;
+
+    try {
+        snapshotCanvas.width = video.videoWidth || 640;
+        snapshotCanvas.height = video.videoHeight || 480;
+        const ctx = snapshotCanvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, snapshotCanvas.width, snapshotCanvas.height);
+        const dataUrl = snapshotCanvas.toDataURL("image/jpeg", 0.75);
+
+        // Step 1: Check Liveness if not yet passed
+        if (!livenessPassed && !checkManualMode.checked) {
+            const resp = await fetch("/api/liveness/check", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ session_id: sessionId, image: dataUrl })
+            });
+
+            const data = await resp.json();
+            if (data.success && data.result) {
+                updateLivenessUI(data.result);
+                if (data.result.liveness_passed) {
+                    livenessPassed = true;
+                    triggerRecognition(dataUrl);
+                }
+            }
+        } else if (checkManualMode.checked && !recognitionDone) {
+            triggerRecognition(dataUrl);
+        }
+    } catch (err) {
+        console.error("Frame processing error:", err);
+    } finally {
+        isProcessingFrame = false;
+    }
+}
+
+function updateLivenessUI(result) {
+    hudEar.innerText = result.ear.toFixed(2);
+    hudBlinkCount.innerText = `${result.blink_count} / ${result.blinks_needed}`;
+    labelBlinkProgress.innerText = `${result.blink_count} / ${result.blinks_needed}`;
+
+    const pct = Math.min(100, Math.round((result.blink_count / result.blinks_needed) * 100));
+    progressBlink.style.width = pct + "%";
+
+    if (!result.face_detected) {
+        instructionText.innerHTML = '<span class="w-2 h-2 rounded-full bg-status-alert animate-pulse"></span> Wajah tidak terdeteksi. Posisikan wajah di kamera';
+        livenessAlertMsg.innerText = "Wajah tidak terdeteksi... Posisikan wajah di dalam frame.";
+        clearOverlay();
+        return;
+    }
+
+    if (result.liveness_passed) {
+        instructionText.innerHTML = '<span class="w-2 h-2 rounded-full bg-status-success animate-pulse"></span> Liveness OK! Mengidentifikasi biometrik...';
+        hudLivenessBadge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-status-success/20 text-status-success border border-status-success/30 font-mono";
+        hudLivenessBadge.innerHTML = '<span class="material-symbols-outlined text-[14px]">verified</span> Anti-Spoof: Terverifikasi';
+        livenessAlertMsg.innerText = "Liveness terverifikasi! Subjek biologis asli terdeteksi.";
+    } else {
+        instructionText.innerHTML = `<span class="w-2 h-2 rounded-full bg-status-warning animate-pulse"></span> Silakan kedipkan mata Anda (${result.blink_count}/${result.blinks_needed})`;
+        livenessAlertMsg.innerText = `Kedipkan mata Anda (${result.blink_count}/${result.blinks_needed}) untuk memverifikasi keaslian subjek.`;
+    }
+
+    if (result.face_box) {
+        drawFaceBox(result.face_box, result.liveness_passed ? "#32D74B" : "#FF9F0A");
+    }
+}
+
+function drawFaceBox(box, color) {
+    const ctx = overlayCanvas.getContext("2d");
+    ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+    const [x, y, w, h] = box;
+
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(x, y, w, h);
+
+    const len = 15;
+    ctx.lineWidth = 4;
+    // Corners
+    ctx.beginPath();
+    ctx.moveTo(x, y + len); ctx.lineTo(x, y); ctx.lineTo(x + len, y);
+    ctx.moveTo(x + w - len, y); ctx.lineTo(x + w, y); ctx.lineTo(x + w, y + len);
+    ctx.moveTo(x, y + h - len); ctx.lineTo(x, y + h); ctx.lineTo(x + len, y + h);
+    ctx.moveTo(x + w - len, y + h); ctx.lineTo(x + w, y + h); ctx.lineTo(x + w, y + h - len);
+    ctx.stroke();
+}
+
+function clearOverlay() {
+    const ctx = overlayCanvas.getContext("2d");
+    ctx.clearRect(0, 0, overlayCanvas.width, overlayCanvas.height);
+}
+
+// Step 2: Trigger FaceNet CNN Recognition
+async function triggerRecognition(imageDataUrl) {
+    if (recognitionDone) return;
+    recognitionDone = true;
+
+    try {
+        const resp = await fetch("/api/recognize", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                session_id: sessionId,
+                image: imageDataUrl,
+                bypass_liveness: checkManualMode.checked,
+                mata_kuliah: "General / Enterprise"
+            })
+        });
+
+        const data = await resp.json();
+        if (data.success) {
+            showRecognitionSuccess(data);
+        } else {
+            showRecognitionFailure(data.message);
+        }
+    } catch (err) {
+        console.error("Recognition call failed:", err);
+        showRecognitionFailure("Terjadi kesalahan koneksi saat memproses biometrik.");
+    }
+}
+
+function showRecognitionSuccess(data) {
+    waitingRecognitionState.classList.add("hidden");
+    recognizedState.classList.remove("hidden");
+
+    document.getElementById("resNama").innerText = data.student.nama;
+    document.getElementById("resNim").innerText = data.student.nim;
+    document.getElementById("resDistance").innerText = data.metrics.euclidean_distance.toFixed(4);
+    document.getElementById("resConfidence").innerText = data.metrics.confidence_pct + "%";
+    
+    if (data.already_recorded) {
+        document.getElementById("resStatusTitle").innerText = "Sudah Presensi Hari Ini";
+        document.getElementById("resStatusSubtitle").innerText = data.message;
+    } else {
+        document.getElementById("resStatusTitle").innerText = "Presensi Berhasil!";
+        document.getElementById("resStatusSubtitle").innerText = data.message;
+    }
+
+    instructionText.innerHTML = `<span class="w-2 h-2 rounded-full bg-status-success animate-pulse"></span> Presensi Berhasil: ${data.student.nama}`;
+}
+
+function showRecognitionFailure(msg) {
+    waitingRecognitionState.innerHTML = `
+        <div class="text-status-alert my-2">
+            <span class="material-symbols-outlined text-4xl mb-1">cancel</span>
+            <h4 class="font-bold text-sm text-white mt-1">Wajah Tidak Dikenali</h4>
+            <p class="text-xs text-outline max-w-xs mt-1 mb-4">${msg}</p>
+            <button class="px-5 py-2 rounded-full bg-surface-container-high neu-btn font-mono text-xs uppercase text-white hover:text-status-success active:neu-pressed" onclick="resetAttendanceFlow()">
+                Coba Lagi
+            </button>
+        </div>
+    `;
+    instructionText.innerHTML = '<span class="w-2 h-2 rounded-full bg-status-alert animate-pulse"></span> Wajah Tidak Terverifikasi';
+}
+
+function resetAttendanceFlow() {
+    recognitionDone = false;
+    livenessPassed = false;
+    clearOverlay();
+
+    fetch("/api/liveness/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId })
+    });
+
+    waitingRecognitionState.classList.remove("hidden");
+    waitingRecognitionState.innerHTML = `
+        <div class="w-12 h-12 rounded-full neu-extrude flex items-center justify-center text-outline">
+            <span class="material-symbols-outlined text-[24px] animate-pulse">person_search</span>
+        </div>
+        <div>
+            <h3 class="text-sm font-semibold text-white">Standby Identifikasi</h3>
+            <p class="text-xs text-outline max-w-xs mt-1">
+                Menunggu verifikasi liveness tahap 1 selesai sebelum menjalankan ekstraksi embedding 512-d FaceNet.
+            </p>
+        </div>
+    `;
+    recognizedState.classList.add("hidden");
+
+    hudBlinkCount.innerText = "0 / 2";
+    labelBlinkProgress.innerText = "0 / 2";
+    progressBlink.style.width = "0%";
+    hudLivenessBadge.className = "inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-status-alert/20 text-status-alert border border-status-alert/30 font-mono";
+    hudLivenessBadge.innerHTML = '<span class="material-symbols-outlined text-[14px]">shield</span> Anti-Spoof: Belum Lolos';
+    instructionText.innerHTML = '<span class="w-2 h-2 rounded-full bg-status-warning animate-pulse"></span> Arahkan wajah Anda ke kamera';
+}
+
+btnRestart.addEventListener("click", resetAttendanceFlow);
+window.addEventListener("DOMContentLoaded", initWebcam);
+</script>
+{% endblock %}

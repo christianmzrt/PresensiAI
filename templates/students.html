@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+
+{% block title %}Basis Data Mahasiswa - PresensiAI{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto w-full px-4 sm:px-6 flex flex-col gap-8">
+
+    <!-- Top Stats & Metric Ribbons -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="p-6 rounded-[2rem] bg-surface-container shadow-[-4px_-4px_12px_rgba(255,255,255,0.04),6px_6px_14px_rgba(0,0,0,0.65)] flex items-center justify-between">
+            <div class="flex flex-col gap-1">
+                <span class="font-mono text-xs uppercase tracking-widest text-outline">Total Subjek Terdaftar</span>
+                <span class="text-3xl sm:text-4xl text-primary font-extrabold tabular-nums font-mono">{{ students|length }}</span>
+                <span class="font-mono text-xs text-status-success flex items-center gap-1.5 mt-0.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-status-success animate-pulse"></span>
+                    Sync Local Database
+                </span>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-surface-container-low shadow-[inset_2px_2px_5px_rgba(0,0,0,0.8),inset_-1px_-1px_3px_rgba(255,255,255,0.05)] flex items-center justify-center text-on-surface">
+                <span class="material-symbols-outlined text-[24px]">group</span>
+            </div>
+        </div>
+
+        <div class="p-6 rounded-[2rem] bg-surface-container shadow-[-4px_-4px_12px_rgba(255,255,255,0.04),6px_6px_14px_rgba(0,0,0,0.65)] flex items-center justify-between">
+            <div class="flex flex-col gap-1">
+                <span class="font-mono text-xs uppercase tracking-widest text-outline">Embedding Store SQLite</span>
+                <span class="text-3xl sm:text-4xl text-primary font-extrabold tabular-nums font-mono">
+                    {% set total_samples = namespace(count=0) %}
+                    {% for s in students %}{% set total_samples.count = total_samples.count + s.sample_count %}{% endfor %}
+                    {{ total_samples.count }}
+                </span>
+                <span class="font-mono text-xs text-outline">Array Vektor Tersimpan</span>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-surface-container-low shadow-[inset_2px_2px_5px_rgba(0,0,0,0.8),inset_-1px_-1px_3px_rgba(255,255,255,0.05)] flex items-center justify-center text-on-surface">
+                <span class="material-symbols-outlined text-[24px]">memory</span>
+            </div>
+        </div>
+
+        <div class="p-6 rounded-[2rem] bg-surface-container shadow-[-4px_-4px_12px_rgba(255,255,255,0.04),6px_6px_14px_rgba(0,0,0,0.65)] flex items-center justify-between">
+            <div class="flex flex-col gap-1">
+                <span class="font-mono text-xs uppercase tracking-widest text-outline">Arsitektur Ekstraksi</span>
+                <span class="text-xl sm:text-2xl text-primary font-bold">FaceNet CNN</span>
+                <span class="font-mono text-xs text-outline">Dimensi: 512-D L2 Norm</span>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-surface-container-low shadow-[inset_2px_2px_5px_rgba(0,0,0,0.8),inset_-1px_-1px_3px_rgba(255,255,255,0.05)] flex items-center justify-center text-status-success">
+                <span class="material-symbols-outlined text-[24px]">verified_user</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header Section -->
+    <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+        <div class="flex flex-col gap-1">
+            <div class="flex items-center gap-2">
+                <span class="w-2.5 h-2.5 rounded-full bg-primary shadow-[0_0_8px_rgba(255,255,255,0.7)]"></span>
+                <span class="font-mono text-xs uppercase tracking-widest text-outline">Biometric Master Identity Matrix</span>
+            </div>
+            <h1 class="text-2xl sm:text-3xl text-primary font-extrabold tracking-wider uppercase">
+                Basis Data Mahasiswa
+            </h1>
+        </div>
+        <div class="flex items-center gap-3 shrink-0">
+            <a href="{{ url_for('register_page') }}" 
+               class="px-5 py-3 rounded-full bg-surface-container-high hover:bg-surface-bright text-primary font-mono text-xs font-bold shadow-[-4px_-4px_10px_rgba(255,255,255,0.06),4px_4px_12px_rgba(0,0,0,0.7)] active:shadow-[inset_3px_3px_6px_rgba(0,0,0,0.7),inset_-2px_-2px_4px_rgba(255,255,255,0.04)] transition-all flex items-center gap-2 uppercase tracking-wider">
+                <span class="material-symbols-outlined text-[18px] text-status-success">person_add</span>
+                <span>Tambah Mahasiswa</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Main Data Table Container -->
+    <div class="w-full rounded-[32px] bg-surface-container shadow-[-4px_-4px_10px_rgba(255,255,255,0.05),4px_4px_10px_rgba(0,0,0,0.5)] overflow-hidden flex flex-col">
+        <div class="overflow-x-auto w-full">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr class="bg-surface-container-low text-outline font-mono text-[11px] uppercase tracking-wider border-b border-white/[0.04]">
+                        <th class="py-4 px-6 font-medium w-16">No</th>
+                        <th class="py-4 px-6 font-medium">NIM</th>
+                        <th class="py-4 px-6 font-medium">Nama Lengkap</th>
+                        <th class="py-4 px-6 font-medium">Jumlah Sampel Fitur CNN</th>
+                        <th class="py-4 px-6 font-medium">Waktu Registrasi</th>
+                        <th class="py-4 px-6 font-medium text-right">Aksi Demo</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-white/[0.04] text-xs">
+                    {% if students %}
+                        {% for s in students %}
+                        <tr id="row-student-{{ s.id }}" class="hover:bg-surface-container-high/40 transition-colors">
+                            <td class="py-4 px-6 font-mono text-outline tabular-nums">{{ loop.index }}</td>
+                            <td class="py-4 px-6 font-mono text-primary font-bold tracking-wider tabular-nums">{{ s.nim }}</td>
+                            <td class="py-4 px-6">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-full bg-surface-container-low shadow-[inset_2px_2px_4px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,255,255,0.06)] flex items-center justify-center font-mono text-xs text-primary font-bold">
+                                        {{ s.nama[:2]|upper }}
+                                    </div>
+                                    <div class="flex flex-col">
+                                        <span class="text-primary font-semibold text-sm">{{ s.nama }}</span>
+                                        <span class="font-mono text-[10px] text-outline">Registered Subject</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-4 px-6">
+                                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-surface-container-low shadow-[inset_1px_1px_3px_rgba(0,0,0,0.6),inset_-1px_-1px_2px_rgba(255,255,255,0.03)] font-mono text-[11px]">
+                                    <span class="w-1.5 h-1.5 rounded-full bg-status-success"></span>
+                                    <span class="text-outline tracking-wider">{{ s.sample_count }} Vektor Embedding</span>
+                                </div>
+                            </td>
+                            <td class="py-4 px-6 font-mono text-outline tabular-nums">
+                                {{ s.created_at }}
+                            </td>
+                            <td class="py-4 px-6 text-right">
+                                <button type="button" onclick="deleteStudent({{ s.id }}, '{{ s.nama }}')"
+                                        class="px-4 py-2 rounded-full bg-surface-container-high hover:bg-status-alert/10 text-status-alert font-mono text-xs uppercase tracking-wider shadow-[-2px_-2px_6px_rgba(255,255,255,0.04),3px_3px_6px_rgba(0,0,0,0.6)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.8),inset_-1px_-1px_2px_rgba(255,59,48,0.15)] transition-all inline-flex items-center gap-1.5">
+                                    <span class="material-symbols-outlined text-[16px]">delete</span>
+                                    <span>Hapus (Reset Demo)</span>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center py-12 text-outline">
+                                <div class="flex flex-col items-center justify-center gap-2">
+                                    <span class="material-symbols-outlined text-4xl opacity-30">person_off</span>
+                                    <h3 class="text-sm font-bold text-white">Basis data mahasiswa kosong</h3>
+                                    <p class="text-xs text-outline max-w-sm">Belum ada data biometrik wajah mahasiswa yang didaftarkan ke sistem.</p>
+                                    <a href="{{ url_for('register_page') }}" class="px-5 py-2.5 mt-2 rounded-full bg-surface-container-high neu-btn font-mono text-xs uppercase text-primary hover:text-status-success">
+                                        Daftarkan Mahasiswa Sekarang &rarr;
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Table Bottom Metadata Bar -->
+        <div class="w-full px-6 py-3.5 bg-surface-container-low shadow-[inset_0_2px_4px_rgba(0,0,0,0.4)] flex flex-col sm:flex-row items-center justify-between gap-3 font-mono text-xs text-outline">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-[14px]">storage</span>
+                <span>Database File: <code class="text-primary font-mono">presensi.db (SQLite3)</code></span>
+            </div>
+            <div>
+                <span>Menampilkan <strong>{{ students|length }} Mahasiswa Terdaftar</strong></span>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function deleteStudent(id, nama) {
+    if (!confirm(`Konfirmasi reset demo: Hapus data mahasiswa dan seluruh vektor embedding wajah ${nama}?`)) {
+        return;
+    }
+
+    try {
+        const resp = await fetch(`/api/students/${id}/delete`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+        });
+        const data = await resp.json();
+        if (data.success) {
+            const row = document.getElementById(`row-student-${id}`);
+            if (row) {
+                row.style.opacity = '0.3';
+                row.style.pointerEvents = 'none';
+            }
+            setTimeout(() => {
+                location.reload();
+            }, 300);
+        } else {
+            alert("Gagal menghapus mahasiswa: " + data.message);
+        }
+    } catch (err) {
+        console.error("Delete error:", err);
+        alert("Terjadi kesalahan jaringan.");
+    }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,47 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual Environment
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment Variables & Secrets
+.env
+.env.local
+
+# Database & Captured User Face Assets (Privacy)
+data/presensi.db
+data/attendance.db
+data/faces/*
+!data/faces/.gitkeep
+!data/.gitkeep
+
+# Large Machine Learning Weights (>50MB, download via script/link)
+*.dat
+models/*.dat
+shape_predictor_68_face_landmarks.dat
+
+# Design exports & temporary mockup assets
+stitch_neumorphic_ai_attendance_interface/
+code.html
+screen.png
+DESIGN.md
+
+# External / Unrelated Workspace Folders
+Diagnosis Kerusakan Starter Motor (Pribadi)/
+
+# IDE & Editor Settings
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# OS junk
+.DS_Store
+Thumbs.db
+Desktop.ini
