@@ -3,7 +3,9 @@ import base64
 import cv2
 import numpy as np
 import datetime
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash
+import csv
+import io
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, Response
 
 import config
 import database
@@ -240,6 +242,54 @@ def history_page():
     date_filter = request.args.get("tanggal", "")
     records = database.get_attendance_history(date_filter if date_filter else None)
     return render_template("history.html", records=records, current_filter=date_filter)
+
+@app.route("/history/export")
+def export_history_csv():
+    date_filter = request.args.get("tanggal", "").strip()
+    records = database.get_attendance_history(date_filter if date_filter else None)
+
+    output = io.StringIO()
+    writer = csv.writer(output)
+
+    # Header kolom CSV
+    writer.writerow([
+        "No",
+        "NIM",
+        "Nama Mahasiswa",
+        "Mata Kuliah",
+        "Tanggal",
+        "Waktu (WITA)",
+        "Status",
+        "CNN Confidence (%)",
+        "Metode Verifikasi"
+    ])
+
+    for idx, r in enumerate(records, start=1):
+        writer.writerow([
+            idx,
+            r["nim"],
+            r["nama"],
+            r["mata_kuliah"],
+            r["tanggal"],
+            r["waktu"],
+            r["status"],
+            r["confidence"],
+            "Anti-Spoof + CNN"
+        ])
+
+    filename = f"riwayat_presensi_{date_filter}.csv" if date_filter else "riwayat_presensi_semua.csv"
+
+    # utf-8-sig agar karakter dan kolom rapi saat dibuka langsung di Microsoft Excel
+    csv_bytes = output.getvalue().encode("utf-8-sig")
+    output.close()
+
+    return Response(
+        csv_bytes,
+        mimetype="text/csv; charset=utf-8",
+        headers={
+            "Content-Disposition": f'attachment; filename="{filename}"'
+        }
+    )
 
 @app.route("/students")
 def students_page():
